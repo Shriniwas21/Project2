@@ -45,37 +45,16 @@ class GradientBoostingClassifier:
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.trees = []
-        self.initial_prediction = 0.0
+        self.initial_prediction = 0.0  # usually log(odds)
 
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
     def fit(self, X, y):
-        n_samples, n_features = X.shape
-
-        pos_ratio = np.clip(np.mean(y), 1e-5, 1 - 1e-5)
-        self.initial_prediction = np.log(pos_ratio / (1 - pos_ratio))
-        F_m = np.full(n_samples, self.initial_prediction)
-
-        for m in range(self.n_estimators):
-            prob = self._sigmoid(F_m)
-            residuals = y - prob
-
-            stump = DecisionStump()
-            stump.fit(X, residuals)
-
-            update = stump.predict(X)
-            F_m += self.learning_rate * update
-
-            self.trees.append(stump)
+        pass
 
     def predict_proba(self, X):
-        F_m = np.full(X.shape[0], self.initial_prediction)
-        for stump in self.trees:
-            F_m += self.learning_rate * stump.predict(X)
-        return self._sigmoid(F_m)
+        pass
 
     def predict(self, X):
-        prob = self.predict_proba(X)
-        return (prob >= 0.5).astype(int)
-
+        pass
