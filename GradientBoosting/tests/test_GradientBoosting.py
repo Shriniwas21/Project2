@@ -10,6 +10,7 @@ def test_gradient_boosting_on_simple_data():
 
     model = GradientBoostingClassifier(n_estimators=5, learning_rate=0.5)
     model.fit(X, y)
+    model.plot_loss_curve("testcase1_loss_plot.png")
     predictions = model.predict(X)
 
     print("Predictions:", predictions)
