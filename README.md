@@ -108,8 +108,6 @@ pytest -s GradientBoosting/tests/
 ```
 The `-s` flag prints formatted output for each test.
 
-You will see **10 test outputs**, each formatted with headers and evaluation metrics.
-
 ### Example Usage
 ```python
 from GradientBoosting.model.GradientBoosting import GradientBoostingClassifier
