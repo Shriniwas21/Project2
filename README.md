@@ -27,25 +27,32 @@ We followed Sections 10.9-10.10 of *Elements of Statistical Learning (2nd Editio
 
 ## Test Design and Implementation
 
-- A comprehensive test suite is located in the `tests/` directory, containing unit tests for:
-  - **Model Correctness**: Validates accurate predictions for separable datasets
-  - **Subsampling Behavior**: Verifies model convergence and saved loss plots with partial data
-  - **Stump vs Tree Evaluation**: Tests that the model trains and predicts with both learner types
-  - **Feature Importance Normalization**: Ensures feature_importances_ sum to 1
-  - **Metric Reporting**: Validates precision, recall, F1, accuracy, and log-loss via `GradientBoostingResults`
+- The test suite is built using `pytest` and includes **both unit and integration-level tests**. It ensures:
+  - Correctness on toy datasets
+  - Generalization on noisy and sparse data
+  - Stability on imbalanced class distributions
+  - Validity of output probabilities (`predict_proba`)
+  - File output correctness for plots
 
 - Evaluation Metrics:
-    - Implemented **accuracy**, **precision**, **recall**, **F1-score**, and **log-loss** entirely from scratch.
-    - Metrics are reported using a dedicated class (`GradientBoostingResults`) to ensure modularity and clarity.
+    - `GradientBoostingResults` evaluates predictions using:
+      - Accuracy
+      - Precision
+      - Recall
+      - F1 Score
+      - Log-loss
+    - These metrics are implemented **without using scikit-learn**
 
 - Edge Case Handling:
-    - Validated behavior when one feature dominates splits
-    - Tested cases with fewer boosting rounds and very high/low learning rates
-    - Ensured that `subsample=1.0` and `subsample<1.0` produce valid loss curves
+    - All labels same
+    - High-dimensional features with low signal
+    - Data with high class imbalance
+    - Probabilistic output range and plotting
 
 - Model Validation Enhancements:
-    - All tests print model behavior, log-loss values, and predictions where needed for visual traceability
-    - Plots are saved to the `plots/` directory and included in GitHub for review
+    - Tests check `plot_loss_curve()` generates PNGs
+    - Metric summaries printed for human-readable traceability
+    - Threshold-based assertions on accuracy, precision, and recall included
 
 ---
 
@@ -57,14 +64,25 @@ Project2/
 │   │   ├── GradientBoosting.py
 │   │   └── GradientBoostingResults.py
 │   ├── tests/
+│   │   ├── plots/
+│   │   ├── images/
+│   │   ├── testcase1_loss_plot.png
+│   │   ├── subsampling_loss_curve.png
 │   │   ├── test_DecisionStump.py
 │   │   ├── test_GradientBoosting.py
 │   │   ├── test_GradientBoostingResults.py
 │   │   ├── test_subsampling.py
 │   │   └── test_feature_importance.py
+│   ├── datasets/
+│   │   ├── Linear_dataset.csv
+│   │   ├── generate_classification_data.py
+│   │   ├── high_dim_sparse_dataset.csv
+│   │   ├── imbalance_dataset.csv
+│   │   └── noisy_linear_dataset.csv
 │   ├── plots/
 │   │   ├── testcase1_loss_plot.png
 │   │   ├── subsampling_loss_curve.png
+│   │   ├── long_Loss_curve_over_boosting.png
 ├── README.md
 ├── requirements.txt
 
@@ -127,16 +145,27 @@ It's ideal when:
 - You need model flexibility and interpretability (via feature importance and visualization)
 
 ## How We Tested the Model
-We implemented multiple unit tests across modules:
 
-- test_DecisionStump.py: Validates stump splits correctly
-- test_GradientBoosting.py: End-to-end prediction checks
-- test_GradientBoostingResults.py: Accuracy, precision, recall, log-loss
-- test_subsampling.py: Subsampled boosting + loss curve generation
-- test_feature_importance.py: Verifies feature importance sum = 1
+We implemented multiple **unit tests** using PyTest, with real-world inspired datasets. Each test is structured to check a specific scenario:
+
+- `test_DecisionStump.py`: Validates simple stump prediction on toy data
+- `test_feature_importance.py`: Ensures that feature importances are tracked and normalized
+- `test_subsampling.py`: Verifies log-loss convergence and saved plots with sampled data
+- `test_GradientBoostingResults.py`: Tests metric calculations (accuracy, precision, recall, F1, log-loss)
+- `test_GradientBoosting.py`: Comprehensive coverage on:
+  - Perfectly separable data
+  - Noisy linear regression data
+  - High-dimensional sparse datasets
+  - Imbalanced classes (precision/recall check)
+  - Constant-label edge cases
+  - Output of `predict_proba` in [0, 1]
+  - Plot saving using `plot_loss_curve()`
+
+All test files use PyTest conventions and datasets are loaded from the `datasets/` directory for reproducibility and grading transparency.
+
 
 **Test Outputs:**
-The outputs are present in ./GradientBossting/tests/images/test_*.PNG)
+Test output screenshots are saved in `./GradientBoosting/tests/images/` as `test_*.png`.
 
 ## Limitations / Known Challenges
 - Unstable predictions on small noisy datasets when using deep trees and high learning rates.
