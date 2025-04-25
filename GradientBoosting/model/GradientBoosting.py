@@ -123,11 +123,12 @@ class DecisionTreeRegressor:
             return self._predict_one(x, node.right)
 
 class GradientBoostingClassifier:
-    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, base_learner="tree"):
+    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3, base_learner="tree", subsample=1.0):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.base_learner = base_learner
+        self.subsample = subsample
         self.trees = []
         self.initial_prediction = 0.0
         self.loss_list = []
@@ -147,15 +148,22 @@ class GradientBoostingClassifier:
             log_loss = -np.mean(y * np.log(np.clip(prob, 1e-10, 1)) + (1 - y) * np.log(np.clip(1 - prob, 1e-10, 1)))
             self.loss_list.append(log_loss)
 
-
             residuals = y - prob
+            if self.subsample < 1.0:
+                sample_size = int(self.subsample * n_samples)
+                indices = np.random.choice(n_samples, sample_size, replace=False)
+                X_sample = X[indices]
+                residuals_sample = residuals[indices]
+            else:
+                X_sample = X
+                residuals_sample = residuals
 
             if self.base_learner == "stump":
                 learner = DecisionStump()
             else:
                 learner = DecisionTreeRegressor(max_depth=self.max_depth)
 
-            learner.fit(X, residuals)
+            learner.fit(X_sample, residuals_sample)
             update = learner.predict(X)
 
             F_m += self.learning_rate * update
@@ -183,10 +191,30 @@ class GradientBoostingClassifier:
         plt.grid(True)
         plt.tight_layout()
 
-        # Save plot
         os.makedirs("plots", exist_ok=True)
         full_path = os.path.join("plots", save_path)
         plt.savefig(full_path)
         print(f"[INFO] Loss curve saved to: {full_path}")
         plt.close()
+
+    def feature_importances_(self, n_features):
+        importances = np.zeros(n_features)
+
+        for tree in self.trees:
+            if hasattr(tree, 'root'):
+                self._accumulate_importances(tree.root, importances)
+            elif hasattr(tree, 'feature_index'):
+                importances[tree.feature_index] += 1
+
+        if np.sum(importances) > 0:
+            importances /= np.sum(importances)
+
+        return importances
+
+    def _accumulate_importances(self, node, importances):
+        if node is None or node.value is not None:
+            return
+        importances[node.feature_index] += 1
+        self._accumulate_importances(node.left, importances)
+        self._accumulate_importances(node.right, importances)
 
